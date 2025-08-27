@@ -3,48 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Login (diagnostic)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    .login-container { max-width: 420px; }
+    input, button { padding: 10px; margin: 6px 0; width: 100%; }
+    #error-message { color:#b00020; white-space:pre-wrap; }
+    #log { font-size:12px; background:#f6f6f6; padding:10px; border:1px solid #ddd; max-height:180px; overflow:auto; }
+  </style>
 </head>
 <body>
   <div class="login-container">
     <h1>Connexion</h1>
     <form id="login-form">
       <input type="text" id="username" placeholder="Nom d'utilisateur" required>
-      <input type="password" id="password" placeholder="Mot de passe" required>
+      <input type="password" id="password" placeholder="Mot de passe (≥ 6 caractères)" required>
       <button type="submit">Se connecter</button>
     </form>
-    <p id="error-message" style="color:#c00;"></p>
+    <p id="error-message"></p>
+    <details open><summary>Journal</summary><pre id="log"></pre></details>
   </div>
 
-  <!-- IMPORTANT : versions COMPAT (namespaced) -->
+  <!-- SDK COMPAT (indispensable pour firebase.auth()) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <script>
-    // Config Firebase (garde tes valeurs)
+    // --- util log ---
+    const $log = (m) => { console.log(m); document.getElementById('log').textContent += m + "\n"; };
+
+    // --- Config Firebase (tes valeurs) ---
     const firebaseConfig = {
       apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
       authDomain: "smartverbatims.firebaseapp.com",
       projectId: "smartverbatims",
-      storageBucket: "smartverbatims.appspot.com", // <- appspot.com
+      storageBucket: "smartverbatims.appspot.com",
       messagingSenderId: "1043743921058",
       appId: "1:1043743921058:web:637f9bc10cc3859e86d8fb",
       measurementId: "G-R64GD8CJLS"
     };
-    firebase.initializeApp(firebaseConfig);
 
-    // Redirige si déjà connecté
-    firebase.auth().onAuthStateChanged((user) => {
+    // --- Init + contrôles ---
+    $log("Initialisation Firebase…");
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    $log("Firebase initialisé.");
+
+    // Rediriger si déjà connecté
+    auth.onAuthStateChanged((user) => {
       if (user) {
-        const email = user.email;
+        $log("onAuthStateChanged → connecté comme " + user.email);
+        // Redirection de test
+        window.location.href = "chatbot.html?user=" + encodeURIComponent(user.email);
+      } else {
+        $log("onAuthStateChanged → pas connecté");
+      }
+    });
+
+    // Gestion du formulaire
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = "";
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      const email = username + "@chatbot.com";
+      $log("Tentative connexion pour " + email);
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        $log("Connexion OK → redirection…");
         window.location.href = "chatbot.html?user=" + encodeURIComponent(email);
+      } catch (err) {
+        $log("Échec connexion: " + err.code + " / " + err.message);
+        if (err.code === "auth/user-not-found") {
+          try {
+            await auth.createUserWithEmailAndPassword(email, password); // nécessite ≥ 6 caractères
+            $log("Utilisateur créé → redirection…");
+            window.location.href = "chatbot.html?user=" + encodeURIComponent(email);
+          } catch (e2) {
+            errorMsg.textContent = "Création impossible : " + e2.message;
+            $log("Erreur création: " + e2.code + " / " + e2.message);
+          }
+        } else {
+          errorMsg.textContent = "Erreur : " + err.message;
+        }
       }
     });
   </script>
-
-  <!-- Logiciel de login -->
-  <script src="app.js"></script>
 </body>
 </html>
+
 
