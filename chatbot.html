@@ -1,19 +1,7 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
-</head>
-<body>
-    <h1>Bienvenue sur ton espace perso</h1>
-    <p id="user-email"></p>
-
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const user = params.get("user");
-        document.getElementById("user-email").innerText = "Connecté en tant que : " + user;
-    </script>
-</body>
-</html>
-
+<!DOCTYPE html><html><body>
+<h1>Chatbot</h1>
+<button onclick="firebase.auth().signOut().then(()=>location.href='index.html')">Se déconnecter</button>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>firebase.initializeApp(<?php /* colle la même config JSON ici si pas d’app.js */ ?>)</script>
+</body></html>
