@@ -1,43 +1,50 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="login-container">
-        <h1>Connexion</h1>
-        <form id="login-form">
-            <input type="text" id="username" placeholder="Nom d'utilisateur" required>
-            <input type="password" id="password" placeholder="Mot de passe" required>
-            <button type="submit">Se connecter</button>
-        </form>
-        <p id="error-message"></p>
-    </div>
+  <div class="login-container">
+    <h1>Connexion</h1>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+      <input type="password" id="password" placeholder="Mot de passe" required>
+      <button type="submit">Se connecter</button>
+    </form>
+    <p id="error-message" style="color:#c00;"></p>
+  </div>
 
-    <!-- Import Firebase SDK depuis le CDN -->
-    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
+  <!-- IMPORTANT : versions COMPAT (namespaced) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
-    <!-- Configuration Firebase -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
-            authDomain: "smartverbatims.firebaseapp.com",
-            projectId: "smartverbatims",
-            storageBucket: "smartverbatims.appspot.com",  // <-- Correction ici
-            messagingSenderId: "1043743921058",
-            appId: "1:1043743921058:web:637f9bc10cc3859e86d8fb",
-            measurementId: "G-R64GD8CJLS"
-        };
+  <script>
+    // Config Firebase (garde tes valeurs)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
+      authDomain: "smartverbatims.firebaseapp.com",
+      projectId: "smartverbatims",
+      storageBucket: "smartverbatims.appspot.com", // <- appspot.com
+      messagingSenderId: "1043743921058",
+      appId: "1:1043743921058:web:637f9bc10cc3859e86d8fb",
+      measurementId: "G-R64GD8CJLS"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-        // Initialisation Firebase
-        firebase.initializeApp(firebaseConfig);
-    </script>
+    // Redirige si déjà connecté
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        const email = user.email;
+        window.location.href = "chatbot.html?user=" + encodeURIComponent(email);
+      }
+    });
+  </script>
 
-    <!-- Script de gestion du login -->
-    <script src="app.js"></script>
+  <!-- Logiciel de login -->
+  <script src="app.js"></script>
 </body>
 </html>
+
