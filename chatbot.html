@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chat – Baromètre de satisfaction</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="color-scheme" content="light only" />
   <link rel="icon" type="image/png" href="https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true" />
@@ -222,20 +220,7 @@ function bubble(text, role) {
 
           conversationId = data?.conversation_id || conversationId;
           const answer = data?.answer || (data ? JSON.stringify(data) : "(réponse vide)");
-let html = "";
-try {
-  html = marked.parse(answer || "");
-} catch {
-  html = answer || "";
-}
-// si marked n'a rien converti (pas de markdown), on force les <br>
-if (!html.includes("<p") && (answer || "").includes("\n")) {
-  html = DOMPurify.sanitize((answer || "").replace(/\n/g, "<br/>"));
-} else {
-  html = DOMPurify.sanitize(html);
-}
-bot.innerHTML = html;
-
+          bot.textContent = answer;
           messages.scrollTop = messages.scrollHeight;
         } catch (e) {
           bot.textContent = "Erreur : " + (e?.message || "réseau.");
