@@ -16,7 +16,7 @@
   <div class="login-container">
     <h1>Connexion</h1>
     <form id="login-form">
-      <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+      <input type="text" id="username" placeholder="Nom d'utilisateur (email)" required>
       <input type="password" id="password" placeholder="Mot de passe (≥ 6 caractères)" required>
       <button type="submit">Se connecter</button>
     </form>
@@ -24,7 +24,7 @@
     <details open><summary>Journal</summary><pre id="log"></pre></details>
   </div>
 
-  <!-- SDK COMPAT (indispensable pour firebase.auth()) -->
+  <!-- Firebase SDK COMPAT -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
@@ -32,7 +32,7 @@
     // --- util log ---
     const $log = (m) => { console.log(m); document.getElementById('log').textContent += m + "\n"; };
 
-    // --- Config Firebase (tes valeurs) ---
+    // --- Config Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
       authDomain: "smartverbatims.firebaseapp.com",
@@ -43,17 +43,15 @@
       measurementId: "G-R64GD8CJLS"
     };
 
-    // --- Init + contrôles ---
     $log("Initialisation Firebase…");
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     $log("Firebase initialisé.");
 
-    // Rediriger si déjà connecté
+    // Redirection si déjà connecté
     auth.onAuthStateChanged((user) => {
       if (user) {
         $log("onAuthStateChanged → connecté comme " + user.email);
-        // Redirection de test
         window.location.href = "chatbot.html?user=" + encodeURIComponent(user.email);
       } else {
         $log("onAuthStateChanged → pas connecté");
@@ -96,5 +94,3 @@
   </script>
 </body>
 </html>
-
-
