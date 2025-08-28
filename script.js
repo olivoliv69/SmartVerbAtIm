@@ -52,27 +52,37 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  // --- Gestion modale (avec fallback display + logs) ---
   if (openBtn && modal && closeBtn) {
-    openBtn.addEventListener("click", () => {
+    const showModal = () => {
       fillEditorFromKV();
       modal.classList.remove("hidden");
       modal.classList.add("flex");
-    });
-    closeBtn.addEventListener("click", () => {
+      modal.style.display = "flex";
+      console.log("[settings] open");
+    };
+    const hideModal = () => {
       modal.classList.add("hidden");
       modal.classList.remove("flex");
-    });
+      modal.style.display = "none";
+      console.log("[settings] close");
+    };
+
+    openBtn.addEventListener("click", showModal);
+    closeBtn.addEventListener("click", hideModal);
     modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-      }
+      if (e.target === modal) hideModal();
     });
+  } else {
+    console.warn("[settings] elements not found", { openBtn: !!openBtn, modal: !!modal, closeBtn: !!closeBtn });
   }
+
   if (saveBtn) saveBtn.addEventListener("click", () => {
     saveKV(collectKVFromEditor());
+    // ferme le modal
     modal.classList.add("hidden");
     modal.classList.remove("flex");
+    modal.style.display = "none";
   });
   if (resetBtn) resetBtn.addEventListener("click", () => {
     localStorage.removeItem(LS_KEY);
@@ -136,13 +146,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const etude_id   = (kv.etude_id || "");
     const etude_nom  = (kv.etude_nom || "");
 
-    // On envoie à Dify des variantes "plates" ET "imbriquées"
+    // Inputs "plats" ET "imbriqués" — maximise la compatibilité avec ce que Dify attend
     const inputs = {
-      // PLAT (pour apps qui attendent des champs simples)
+      // PLATS
       user_id, user_nom, user_email, user_role,
       etude_id, etude_nom,
-
-      // IMBRIQUÉ (pour apps qui attendent des objets)
+      // IMBRIQUÉS
       user: {
         id: user_id || null,
         nom: user_nom || null,
@@ -161,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
       response_mode: "blocking",
       auto_generate_name: true,
       query: text,
-      user: user_id || "web-1",               // identifiant “stable” côté Dify
+      user: user_id || "web-1",
       ...(conversationId ? { conversation_id: conversationId } : {})
     };
 
@@ -187,10 +196,9 @@ document.addEventListener("DOMContentLoaded", () => {
         bot.textContent = `Erreur ${res.status} : ${detail}`;
         console.error("[chat] HTTP Error", res.status, res.statusText, data || raw);
 
-        // Message d’aide si inputs manquants
         if (String(detail).toLowerCase().includes("input")) {
           if (errLine) errLine.innerHTML =
-            'Des <strong>inputs</strong> semblent manquants. Cliquez sur <em>⚙️ Paramètres</em> et renseignez <code>etude_id</code>, <code>etude_nom</code>, <code>user_role</code> etc.';
+            'Des <strong>inputs</strong> semblent manquants. Cliquez sur <em>⚙️ Paramètres</em> et renseignez <code>etude_id</code>, <code>etude_nom</code>, <code>user_role</code>…';
         }
         return;
       }
