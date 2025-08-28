@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chat – Baromètre de satisfaction</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="light only" />
 </head>
 <body class="bg-gray-100 min-h-screen">
+  <noscript>
+    <div class="p-4 bg-red-100 text-red-800">Activez JavaScript pour utiliser le chat.</div>
+  </noscript>
+
   <div class="flex h-screen">
     <!-- Sidebar -->
     <aside class="w-72 bg-white border-r p-6">
       <div class="p-6 flex flex-col items-center gap-4 border-b">
-        <img src="https://github.com/olivoliv69/SmartVerbAtIm/blob/main/642fb6cb18990ac38128bbec_Logo-couleurs-1024x388.png?raw=true" alt="Logo Enov" width="120" height="auto">
+        <img src="Ressources/logo-enov.svg" alt="Logo Enov" width="120" height="auto">
       </div>
       <div class="mt-6 text-xs text-gray-500">Études</div>
       <div class="mt-2 p-4 rounded-xl bg-blue-600 text-white text-sm">
@@ -23,7 +28,7 @@
     <main class="flex-1 flex flex-col">
       <header class="h-16 flex items-center justify-between px-8 bg-white border-b">
         <h1 class="text-lg font-semibold text-gray-800">Explorez la voix de vos clients</h1>
-        <button id="logout" class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
+        <button id="logout" type="button" class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
           Déconnexion
         </button>
       </header>
@@ -33,11 +38,10 @@
         <div id="messages" class="flex-1 overflow-y-auto px-10 py-6 space-y-3">
           <div id="empty" class="h-full w-full grid place-items-center text-center text-gray-500">
             <div>
-              <p class="font-medium text-gray-600">Laissez moi vous aider à explorez les verbatims de vos clients!</p>
-              <p class="text-sm">
-                Quelques exemples de ce que vous pouvez me demander :<br>
-                « Cite moi tous les verbatims qui traitent de telle problématique »<br>
-                « Fais moi une synthèse de tout ce qui se dit à propos de la satisfaction à propos du service après-vente ». 
+              <p class="font-medium text-gray-600">Laissez moi vous aider à explorer les verbatims de vos clients !</p>
+              <p class="text-sm mt-1">
+                Exemples : “Cite tous les verbatims sur la livraison” ·
+                “Fais une synthèse du SAV”
               </p>
             </div>
           </div>
@@ -49,10 +53,11 @@
             <input id="q" type="text" placeholder="Tapez votre question…"
                    class="flex-1 rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
             <button id="send" type="button"
-  class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
-  ➤
-</button>
+                    class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+              ➤
+            </button>
           </div>
+          <p id="chat-error" class="max-w-4xl mx-auto mt-2 text-sm text-red-600"></p>
         </div>
       </section>
     </main>
@@ -74,28 +79,35 @@
       measurementId: "G-R64GD8CJLS"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    // Init Firebase (évite double init si déjà fait ailleurs)
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
 
-    // Vérifie si l'utilisateur est connecté, sinon retour login
+    // Garde d'accès : si pas connecté -> retour login
     auth.onAuthStateChanged((user) => {
-      if (!user) {
-        window.location.href = "index.html";
-      }
+      if (!user) window.location.href = "index.html";
     });
 
     // Déconnexion
-    const logoutBtn = document.getElementById("logout");
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await auth.signOut();
-        window.location.href = "index.html";
-      } catch (err) {
-        console.error("Erreur lors de la déconnexion :", err);
+    document.addEventListener("DOMContentLoaded", () => {
+      const logoutBtn = document.getElementById("logout");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+          try {
+            await auth.signOut();
+            window.location.href = "index.html";
+          } catch (err) {
+            console.error("Erreur lors de la déconnexion :", err);
+          }
+        });
       }
     });
   </script>
 
+  <!-- Ton script de chat -->
   <script src="script/script.js"></script>
 </body>
 </html>
+
