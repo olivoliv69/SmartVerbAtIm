@@ -30,12 +30,10 @@
       <header class="h-16 flex items-center justify-between px-4 md:px-8 bg-white border-b">
         <h1 class="text-lg font-semibold text-gray-800">Explorez la voix de vos clients</h1>
         <div class="flex items-center gap-2">
-          <button id="reset" type="button"
-                  class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm border">
+          <button id="reset" type="button" class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm border">
             Nouvelle conversation
           </button>
-          <button id="logout" type="button"
-                  class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
+          <button id="logout" type="button" class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
             Déconnexion
           </button>
         </div>
@@ -55,10 +53,8 @@
         <!-- Input -->
         <div class="border-t bg-white px-4 md:px-6 py-4">
           <div class="max-w-4xl mx-auto flex items-center gap-2">
-            <input id="q" type="text" placeholder="Tapez votre question…"
-                   class="flex-1 rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-            <button id="send" type="button"
-                    class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
+            <input id="q" type="text" placeholder="Tapez votre question…" class="flex-1 rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            <button id="send" type="button" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
               ➤
             </button>
           </div>
@@ -111,47 +107,38 @@
       const refreshBtn = () => btn.disabled = !input.value.trim();
       input.addEventListener("input", refreshBtn); refreshBtn();
 
-function bubble(text, role) {
-  if (empty) empty.remove();
-
-  const line = document.createElement("div");
-  line.className = "flex " + (role === "user" ? "justify-end" : "justify-start") + " items-start gap-2";
-
-  // avatar
-  const avatar = document.createElement("img");
-  avatar.src = (role === "user")
-    ? "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/pers.png?raw=true"
-    : "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true";
-  avatar.alt = (role === "user") ? "Vous" : "Assistant";
-  avatar.width = 32; avatar.height = 32;
-  avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
-  avatar.referrerPolicy = "no-referrer";
-  avatar.loading = "lazy";
-  avatar.onerror = () => { avatar.remove(); };
-
-  // bulle
-  const b = document.createElement("div");
-  b.className = (role === "user")
-    ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
-    : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800 chat-md";
-
-  // user = texte brut ; bot = on mettra du HTML plus tard
-  if (role === "user") b.textContent = text; else b.textContent = text;
-
-  // ordre
-  if (role === "user") { line.appendChild(b); line.appendChild(avatar); }
-  else { line.appendChild(avatar); line.appendChild(b); }
-
-  messages.appendChild(line);
-  messages.scrollTop = messages.scrollHeight;
-  return b;
-}
-
-
-
+      function bubble(text, role) {
+        if (empty) empty.remove();
+        const line = document.createElement("div");
+        // même alignement qu’avant, + avatars (items-start + gap-2)
+        line.className = "flex " + (role === "user" ? "justify-end" : "justify-start") + " items-start gap-2";
+        // avatar
+        const avatar = document.createElement("img");
+        avatar.src = (role === "user")
+          ? "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/pers.png?raw=true"
+          : "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true";
+        avatar.alt = (role === "user") ? "Vous" : "Assistant";
+        avatar.width = 32; avatar.height = 32;
+        avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
+        avatar.referrerPolicy = "no-referrer"; // <-- pour éviter certains blocages GitHub
+        avatar.loading = "lazy";
+        avatar.onerror = () => { avatar.remove(); }; // fallback discret si l’image ne charge pas
+        // bulle
+        const b = document.createElement("div");
+        b.className = (role === "user")
+          ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
+          : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800";
+        b.textContent = text;
+        // ordre : user (bulle puis avatar à droite) / bot (avatar puis bulle à gauche)
+        if (role === "user") { line.appendChild(b); line.appendChild(avatar); }
+        else { line.appendChild(avatar); line.appendChild(b); }
+        messages.appendChild(line);
+        messages.scrollTop = messages.scrollHeight;
+        return b;
+      }
 
       // ---------- Dify ----------
-      const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";
+      const TOKEN = "app-TzgNBWukBZCRAi4wQc2OcS3I";
       const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";
       const FIXED_ETUDE = "DSE0045"; // <- valeur *exacte* exigée par Dify (select)
 
@@ -217,7 +204,7 @@ function bubble(text, role) {
 
           conversationId = data?.conversation_id || conversationId;
           const answer = data?.answer || (data ? JSON.stringify(data) : "(réponse vide)");
-          bot.innerHTML = DOMPurify.sanitize(marked.parse(answer || ""));
+          bot.textContent = answer;
           messages.scrollTop = messages.scrollHeight;
         } catch (e) {
           bot.textContent = "Erreur : " + (e?.message || "réseau.");
