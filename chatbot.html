@@ -29,10 +29,16 @@
     <main class="flex-1 flex flex-col">
       <header class="h-16 flex items-center justify-between px-4 md:px-8 bg-white border-b">
         <h1 class="text-lg font-semibold text-gray-800">Explorez la voix de vos clients</h1>
-        <button id="logout" type="button"
-                class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
-          Déconnexion
-        </button>
+        <div class="flex items-center gap-2">
+          <button id="reset" type="button"
+                  class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm border">
+            Nouvelle conversation
+          </button>
+          <button id="logout" type="button"
+                  class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
+            Déconnexion
+          </button>
+        </div>
       </header>
 
       <section class="flex-1 flex flex-col">
@@ -40,7 +46,7 @@
         <div id="messages" class="flex-1 overflow-y-auto px-4 md:px-10 py-6 space-y-3">
           <div id="empty" class="h-full w-full grid place-items-center text-center text-gray-500">
             <div>
-              <p class="font-medium text-gray-600">Laissez moi vous aider à explorer les verbatims de vos clients !</p>
+              <p class="font-medium text-gray-600">Laissez-moi vous aider à explorer les verbatims de vos clients !</p>
               <p class="text-sm mt-1">Exemples : “Cite tous les verbatims sur la livraison” · “Fais une synthèse du SAV”</p>
             </div>
           </div>
@@ -97,9 +103,9 @@
 
       // ---------- UI ----------
       const messages = $("messages"), empty = $("empty"), input = $("q"),
-            btn = $("send"), errLine = $("chat-error");
+            btn = $("send"), errLine = $("chat-error"), resetBtn = $("reset");
       if (!messages || !input || !btn) {
-        if (errLine) errLine.textContent = "Erreur d’initialisation du chat (éléments introuvables).";
+        if (errLine) errLine.textContent = "Erreur d’init du chat (éléments introuvables).";
         return;
       }
       const refreshBtn = () => btn.disabled = !input.value.trim();
@@ -123,10 +129,20 @@
       // ---------- Dify ----------
       const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";
       const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";
-      const DEFAULT_ETUDE = "DSE0045"; // <- valeur *exacte* exigée par Dify (select)
+      const FIXED_ETUDE = "DSE0045"; // <- valeur *exacte* exigée par Dify (select)
 
       let sending = false;
       let conversationId = null;
+
+      if (resetBtn) resetBtn.addEventListener("click", () => {
+        conversationId = null;
+        messages.innerHTML = "";
+        const placeholder = document.createElement("div");
+        placeholder.id = "empty";
+        placeholder.className = "h-full w-full grid place-items-center text-center text-gray-500";
+        placeholder.innerHTML = '<div><p class="font-medium text-gray-600">Nouvelle conversation démarrée.</p></div>';
+        messages.appendChild(placeholder);
+      });
 
       async function send() {
         if (sending) return;
@@ -140,23 +156,19 @@
         // Infos Firebase (optionnelles)
         let fbUser = null;
         try { fbUser = (window.firebase && firebase.auth().currentUser) || null; } catch {}
-        const user_id    = (fbUser && fbUser.uid) || "web-1";
-        const user_email = (fbUser && fbUser.email) || "";
-        const user_nom   = (fbUser && (fbUser.displayName || fbUser.email)) || "";
+        const user_id = (fbUser && fbUser.uid) || "web-1";
 
-        // Payload: *uniquement* etude en chaîne, comme demandé
+        // ---- PAYLOAD : etude = "DSE0045" (STRING), rien d’autre d’obligatoire ----
         const payload = {
-          inputs: {
-            etude: DEFAULT_ETUDE,
-            // (optionnel) on peut aussi passer quelques métadonnées simples :
-            user_id, user_email, user_nom
-          },
+          inputs: { etude: FIXED_ETUDE },
           response_mode: "blocking",
           auto_generate_name: true,
           query: text,
           user: user_id,
           ...(conversationId ? { conversation_id: conversationId } : {})
         };
+
+        console.log("[chat] typeof etude =", typeof payload.inputs.etude, payload);
 
         try {
           const res = await fetch(ENDPOINT, {
@@ -198,4 +210,3 @@
   </script>
 </body>
 </html>
-
