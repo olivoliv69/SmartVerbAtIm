@@ -6,7 +6,7 @@
   <title>Chat – Baromètre de satisfaction</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="color-scheme" content="light only" />
-  <link rel="icon" type="image/png" href="https://github.com/olivoliv69/SmartVerbAtIm/blob/main/642fb6cb18990ac38128bbec_Logo-couleurs-1024x388.png?raw=true" />
+  <link rel="icon" type="image/png" href="Ressources/favicon.png" />
 </head>
 <body class="bg-gray-100 min-h-screen">
   <noscript>
@@ -17,7 +17,7 @@
     <!-- Sidebar -->
     <aside class="w-72 bg-white border-r p-6">
       <div class="p-6 flex flex-col items-center gap-4 border-b">
-        <img src="https://github.com/olivoliv69/SmartVerbAtIm/blob/main/642fb6cb18990ac38128bbec_Logo-couleurs-1024x388.png?raw=true" alt="Logo Enov" width="120" height="auto">
+        <img src="Ressources/logo-enov.svg" alt="Logo Enov" width="120" height="auto">
       </div>
       <div class="mt-6 text-xs text-gray-500">Études</div>
       <div class="mt-2 p-4 rounded-xl bg-blue-600 text-white text-sm">
@@ -187,7 +187,7 @@
 
           if (!res.ok) {
             const detail = (data && (data.message || data.error)) || raw || (res.status + " " + res.statusText);
-            bot.textContent = `Erreur ${res.status} : ${detail}`;  <!-- FIX: backticks -->
+            bot.textContent = `Erreur ${res.status} : ${detail}`;
             return;
           }
 
@@ -210,5 +210,3 @@
   </script>
 </body>
 </html>
-
-
