@@ -126,6 +126,9 @@ function bubble(text, role) {
   avatar.alt = (role === "user") ? "Vous" : "Assistant";
   avatar.width = 32; avatar.height = 32;
   avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
+  avatar.referrerPolicy = "no-referrer";   // <-- pour éviter certains blocages GitHub
+  avatar.loading = "lazy";
+  avatar.onerror = () => { avatar.remove(); }; // fallback discret si l’image ne charge pas
 
   // bulle
   const b = document.createElement("div");
@@ -147,6 +150,7 @@ function bubble(text, role) {
   messages.scrollTop = messages.scrollHeight;
   return b;
 }
+
 
 
       // ---------- Dify ----------
