@@ -111,39 +111,16 @@
       const refreshBtn = () => btn.disabled = !input.value.trim();
       input.addEventListener("input", refreshBtn); refreshBtn();
 
-      // === NOUVEAU : icônes avatars ===
-      const ICON_USER = "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/pers.png?raw=true";
-      const ICON_BOT  = "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true";
-
       function bubble(text, role) {
         if (empty) empty.remove();
-
         const line = document.createElement("div");
-        line.className = "flex items-start " + (role === "user" ? "justify-end" : "justify-start") + " gap-2";
-
-        // avatar
-        const avatar = document.createElement("img");
-        avatar.src = role === "user" ? ICON_USER : ICON_BOT;
-        avatar.alt = role === "user" ? "Vous" : "Assistant";
-        avatar.width = 32; avatar.height = 32;
-        avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
-
-        // bulle
+        line.className = "flex " + (role === "user" ? "justify-end" : "justify-start");
         const b = document.createElement("div");
         b.className = (role === "user")
           ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
           : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800";
         b.textContent = text;
-
-        // ordre selon l'interlocuteur
-        if (role === "user") {
-          line.appendChild(b);
-          line.appendChild(avatar);
-        } else {
-          line.appendChild(avatar);
-          line.appendChild(b);
-        }
-
+        line.appendChild(b);
         messages.appendChild(line);
         messages.scrollTop = messages.scrollHeight;
         return b;
@@ -181,7 +158,7 @@
         try { fbUser = (window.firebase && firebase.auth().currentUser) || null; } catch {}
         const user_id = (fbUser && fbUser.uid) || "web-1";
 
-        // ---- PAYLOAD : etude = "DSE0045" (STRING) ----
+        // ---- PAYLOAD : etude = "DSE0045" (STRING), rien d’autre d’obligatoire ----
         const payload = {
           inputs: { etude: FIXED_ETUDE },
           response_mode: "blocking",
@@ -190,6 +167,8 @@
           user: user_id,
           ...(conversationId ? { conversation_id: conversationId } : {})
         };
+
+        console.log("[chat] typeof etude =", typeof payload.inputs.etude, payload);
 
         try {
           const res = await fetch(ENDPOINT, {
@@ -208,7 +187,7 @@
 
           if (!res.ok) {
             const detail = (data && (data.message || data.error)) || raw || (res.status + " " + res.statusText);
-            bot.textContent = `Erreur ${res.status} : ${detail}`;
+            bot.textContent = `Erreur ${res.status} : ${detail}`;  <!-- FIX: backticks -->
             return;
           }
 
@@ -217,7 +196,7 @@
           bot.textContent = answer;
           messages.scrollTop = messages.scrollHeight;
         } catch (e) {
-          bot.textContent = "Erreur : " + (e?.message || "réseau.";
+          bot.textContent = "Erreur : " + (e?.message || "réseau.");
           if (errLine) errLine.textContent = "Impossible d’envoyer le message (réseau/CORS ?).";
         } finally {
           sending = false; refreshBtn();
@@ -231,4 +210,5 @@
   </script>
 </body>
 </html>
+
 
