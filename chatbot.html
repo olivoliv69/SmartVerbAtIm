@@ -30,12 +30,10 @@
       <header class="h-16 flex items-center justify-between px-4 md:px-8 bg-white border-b">
         <h1 class="text-lg font-semibold text-gray-800">Explorez la voix de vos clients</h1>
         <div class="flex items-center gap-2">
-          <!-- Bouton paramètres -->
           <button id="open-settings" type="button"
                   class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm border">
             ⚙️ Paramètres
           </button>
-          <!-- Déconnexion -->
           <button id="logout" type="button"
                   class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
             Déconnexion
@@ -72,8 +70,8 @@
     </main>
   </div>
 
-  <!-- Modal Paramètres -->
-  <div id="settings-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4">
+  <!-- Modal Paramètres (z-50 + hidden/flex) -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/40 hidden items-center justify-center p-4">
     <div class="w-full max-w-xl bg-white rounded-2xl shadow-lg border">
       <div class="flex items-center justify-between px-6 py-4 border-b">
         <h2 class="text-lg font-semibold text-gray-800">Paramètres Dify / Étude & Utilisateur</h2>
@@ -172,3 +170,4 @@
   <script src="script/script.js"></script>
 </body>
 </html>
+
