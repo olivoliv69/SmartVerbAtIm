@@ -2,17 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("[chat] DOM prêt");
 
   // ====== CONFIG DIFY ======
-  const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";           // <-- vérifie que c'est bien la clé APP de CETTE app
-  const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";   // <-- endpoint chat de ton instance
-
-  /**
-   * Si ton app Dify a des "Inputs" requis (Studio > Inputs),
-   * déclare-les ici (noms EXACTS) :
-   *
-   * Exemple :
-   * const REQUIRED_INPUTS = { client: "APEC", dataset: "barometre_2025" };
-   */
-  const REQUIRED_INPUTS = {}; // ← vide par défaut
+  const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";
+  const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";
 
   // ====== HOOK UI ======
   const $        = (id) => document.getElementById(id);
@@ -22,13 +13,79 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn      = $("send");
   const errLine  = $("chat-error");
 
+  // ====== UI Paramètres ======
+  const modal     = $("settings-modal");
+  const openBtn   = $("open-settings");
+  const closeBtn  = $("close-settings");
+  const etudeIdEl = $("etude-id");
+  const etudeNomEl= $("etude-nom");
+  const userNomEl = $("user-nom");
+  const userRoleEl= $("user-role");
+  const userIdEl  = $("user-id");
+  const saveBtn   = $("save-kv");
+  const resetBtn  = $("reset-kv");
+
+  // Stockage local
+  const LS_KEY = "dify_inputs_v2";
+  function loadKV() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
+    catch { return {}; }
+  }
+  function saveKV(obj) {
+    localStorage.setItem(LS_KEY, JSON.stringify(obj || {}));
+  }
+  function fillEditorFromKV() {
+    const kv = loadKV();
+    etudeIdEl.value = kv.etude_id || "";
+    etudeNomEl.value = kv.etude_nom || "";
+    userNomEl.value = kv.user_nom || "";
+    userRoleEl.value = kv.user_role || "";
+    userIdEl.value = kv.user_id || "";
+  }
+  function collectKVFromEditor() {
+    return {
+      etude_id: etudeIdEl.value.trim(),
+      etude_nom: etudeNomEl.value.trim(),
+      user_nom: userNomEl.value.trim(),
+      user_role: userRoleEl.value.trim(),
+      user_id: userIdEl.value.trim(),
+    };
+  }
+
+  if (openBtn && modal && closeBtn) {
+    openBtn.addEventListener("click", () => {
+      fillEditorFromKV();
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    });
+    closeBtn.addEventListener("click", () => {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    });
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    });
+  }
+  if (saveBtn) saveBtn.addEventListener("click", () => {
+    saveKV(collectKVFromEditor());
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  });
+  if (resetBtn) resetBtn.addEventListener("click", () => {
+    localStorage.removeItem(LS_KEY);
+    fillEditorFromKV();
+  });
+
+  // ====== Chat basique ======
   if (!messages || !input || !btn) {
     console.error("[chat] IDs manquants:", { messages: !!messages, input: !!input, btn: !!btn });
     if (errLine) errLine.textContent = "Erreur d’initialisation du chat (éléments introuvables).";
     return;
   }
 
-  // bouton actif seulement si texte
   const refreshBtn = () => btn.disabled = !input.value.trim();
   input.addEventListener("input", refreshBtn);
   refreshBtn();
@@ -49,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let sending = false;
-  let conversationId = null; // pour enchaîner les tours si besoin
+  let conversationId = null;
 
   async function send() {
     if (sending) return;
@@ -67,13 +124,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const bot = bubble("…", "bot");
 
-    // --- payload "blocking" (réponse JSON unique, plus simple/fiable que SSE) ---
+    // Récup Firebase user (si dispo)
+    let fbUser = null;
+    try { fbUser = firebase.auth().currentUser || null; } catch {}
+
+    const kv = loadKV();
+    const user_id    = (kv.user_id || (fbUser && fbUser.uid) || "");
+    const user_email = (fbUser && fbUser.email) || "";
+    const user_nom   = (kv.user_nom || (fbUser && (fbUser.displayName || fbUser.email)) || "");
+    const user_role  = (kv.user_role || "user");
+    const etude_id   = (kv.etude_id || "");
+    const etude_nom  = (kv.etude_nom || "");
+
+    // On envoie à Dify des variantes "plates" ET "imbriquées"
+    const inputs = {
+      // PLAT (pour apps qui attendent des champs simples)
+      user_id, user_nom, user_email, user_role,
+      etude_id, etude_nom,
+
+      // IMBRIQUÉ (pour apps qui attendent des objets)
+      user: {
+        id: user_id || null,
+        nom: user_nom || null,
+        email: user_email || null,
+        role: user_role || null
+      },
+      etude: {
+        id: etude_id || null,
+        nom: etude_nom || null,
+        id_user: user_id || null
+      }
+    };
+
     const payload = {
-      inputs: { ...REQUIRED_INPUTS },
+      inputs,
       response_mode: "blocking",
       auto_generate_name: true,
       query: text,
-      user: "web-1",
+      user: user_id || "web-1",               // identifiant “stable” côté Dify
       ...(conversationId ? { conversation_id: conversationId } : {})
     };
 
@@ -90,20 +178,23 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(payload)
       });
 
-      // Lis TOUJOURS le corps (même en cas d'erreur) pour remonter le détail
       const raw = await res.text();
       let data = null;
-      try { data = JSON.parse(raw); } catch { /* pas JSON -> garde raw */ }
+      try { data = JSON.parse(raw); } catch {}
 
       if (!res.ok) {
         const detail = (data && (data.message || data.error)) || raw || (res.status + " " + res.statusText);
         bot.textContent = `Erreur ${res.status} : ${detail}`;
         console.error("[chat] HTTP Error", res.status, res.statusText, data || raw);
+
+        // Message d’aide si inputs manquants
+        if (String(detail).toLowerCase().includes("input")) {
+          if (errLine) errLine.innerHTML =
+            'Des <strong>inputs</strong> semblent manquants. Cliquez sur <em>⚙️ Paramètres</em> et renseignez <code>etude_id</code>, <code>etude_nom</code>, <code>user_role</code> etc.';
+        }
         return;
       }
 
-      // OK
-      // Dify renvoie typiquement { answer, conversation_id, ... }
       conversationId = data?.conversation_id || conversationId;
       const answer = data?.answer || (data ? JSON.stringify(data) : "(réponse vide)");
       bot.textContent = answer;
@@ -118,13 +209,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Bind
   btn.addEventListener("click", send);
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   });
 
   console.log("[chat] Listeners OK");
