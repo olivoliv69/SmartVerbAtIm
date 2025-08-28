@@ -3,25 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login (diagnostic)</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 24px; }
-    .login-container { max-width: 420px; }
-    input, button { padding: 10px; margin: 6px 0; width: 100%; }
-    #error-message { color:#b00020; white-space:pre-wrap; }
-    #log { font-size:12px; background:#f6f6f6; padding:10px; border:1px solid #ddd; max-height:180px; overflow:auto; }
-  </style>
+  <title>Connexion</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Améliorations Tailwind optionnelles -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            smooth: "0 10px 30px rgba(0,0,0,0.08)",
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="icon" href="Ressources/logo-enov.svg" />
+  <meta name="color-scheme" content="light only" />
 </head>
-<body>
-  <div class="login-container">
-    <h1>Connexion</h1>
-    <form id="login-form">
-      <input type="text" id="username" placeholder="Nom d'utilisateur (email)" required>
-      <input type="password" id="password" placeholder="Mot de passe (≥ 6 caractères)" required>
-      <button type="submit">Se connecter</button>
-    </form>
-    <p id="error-message"></p>
-    <details open><summary>Journal</summary><pre id="log"></pre></details>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+  <div class="min-h-screen grid place-items-center px-4">
+    <main class="w-full max-w-md">
+      <!-- Carte -->
+      <div class="bg-white/80 backdrop-blur-xl rounded-2xl shadow-smooth border border-slate-200">
+        <!-- En-tête -->
+        <div class="px-8 pt-8 text-center">
+          <img src="Ressources/logo-enov.svg" alt="Enov" class="mx-auto h-12 w-auto mb-4">
+          <h1 class="text-xl font-semibold text-slate-800">Connexion à votre espace</h1>
+          <p class="text-sm text-slate-500 mt-1">
+            Accédez à l’exploration des verbatims en toute sécurité.
+          </p>
+        </div>
+
+        <!-- Formulaire -->
+        <form id="login-form" class="px-8 pb-8 pt-6 space-y-4">
+          <div>
+            <label for="username" class="block text-sm font-medium text-slate-700">Adresse e-mail</label>
+            <div class="mt-1 relative">
+              <input
+                type="email"
+                id="username"
+                autocomplete="username"
+                required
+                placeholder="prenom.nom@entreprise.com"
+                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40 px-4 py-3 transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium text-slate-700">Mot de passe</label>
+            <div class="mt-1 relative">
+              <input
+                type="password"
+                id="password"
+                autocomplete="current-password"
+                required
+                minlength="6"
+                placeholder="Votre mot de passe"
+                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40 px-4 py-3 transition"
+              />
+            </div>
+            <p class="sr-only">Le mot de passe doit comporter au moins 6 caractères.</p>
+          </div>
+
+          <!-- Erreurs -->
+          <p id="error-message" class="min-h-[1.25rem] text-sm text-red-600"></p>
+
+          <button
+            type="submit"
+            class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 font-medium shadow-sm hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 active:translate-y-[1px] transition"
+          >
+            Se connecter
+          </button>
+        </form>
+      </div>
+
+      <!-- Footer discret -->
+      <p class="text-center text-xs text-slate-400 mt-6">
+        © Enov – Accès sécurisé
+      </p>
+    </main>
   </div>
 
   <!-- Firebase SDK COMPAT -->
@@ -29,9 +94,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <script>
-    // --- util log ---
-    const $log = (m) => { console.log(m); document.getElementById('log').textContent += m + "\n"; };
-
     // --- Config Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
@@ -43,54 +105,58 @@
       measurementId: "G-R64GD8CJLS"
     };
 
-    $log("Initialisation Firebase…");
+    // Init
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    $log("Firebase initialisé.");
 
     // Redirection si déjà connecté
     auth.onAuthStateChanged((user) => {
       if (user) {
-        $log("onAuthStateChanged → connecté comme " + user.email);
         window.location.href = "chatbot.html?user=" + encodeURIComponent(user.email);
-      } else {
-        $log("onAuthStateChanged → pas connecté");
       }
     });
 
-    // Gestion du formulaire
+    // Gestion formulaire
     const form = document.getElementById('login-form');
     const errorMsg = document.getElementById('error-message');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorMsg.textContent = "";
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
 
-      const email = username;
-      $log("Tentative connexion pour " + email);
+      const email = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
-        $log("Connexion OK → redirection…");
         window.location.href = "chatbot.html?user=" + encodeURIComponent(email);
       } catch (err) {
-        $log("Échec connexion: " + err.code + " / " + err.message);
         if (err.code === "auth/user-not-found") {
           try {
-            await auth.createUserWithEmailAndPassword(email, password); // nécessite ≥ 6 caractères
-            $log("Utilisateur créé → redirection…");
+            await auth.createUserWithEmailAndPassword(email, password);
             window.location.href = "chatbot.html?user=" + encodeURIComponent(email);
           } catch (e2) {
-            errorMsg.textContent = "Création impossible : " + e2.message;
-            $log("Erreur création: " + e2.code + " / " + e2.message);
+            errorMsg.textContent = formatError(e2);
           }
         } else {
-          errorMsg.textContent = "Erreur : " + err.message;
+          errorMsg.textContent = formatError(err);
         }
       }
     });
+
+    // Nettoyage des messages d’erreur Firebase pour l’utilisateur final
+    function formatError(err) {
+      switch (err?.code) {
+        case "auth/invalid-email": return "Adresse e-mail invalide.";
+        case "auth/missing-password": return "Veuillez saisir votre mot de passe.";
+        case "auth/weak-password": return "Mot de passe trop faible (min. 6 caractères).";
+        case "auth/wrong-password": return "Mot de passe incorrect.";
+        case "auth/user-disabled": return "Ce compte est désactivé.";
+        case "auth/email-already-in-use": return "Un compte existe déjà avec cette adresse e-mail.";
+        default: return "Une erreur est survenue. Merci de réessayer.";
+      }
+    }
   </script>
 </body>
 </html>
+
