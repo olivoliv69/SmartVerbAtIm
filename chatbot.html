@@ -6,6 +6,7 @@
   <title>Chat – Baromètre de satisfaction</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="color-scheme" content="light only" />
+  <link rel="icon" type="image/png" href="Ressources/favicon.png" />
 </head>
 <body class="bg-gray-100 min-h-screen">
   <noscript>
@@ -40,8 +41,7 @@
             <div>
               <p class="font-medium text-gray-600">Laissez moi vous aider à explorer les verbatims de vos clients !</p>
               <p class="text-sm mt-1">
-                Exemples : “Cite tous les verbatims sur la livraison” ·
-                “Fais une synthèse du SAV”
+                Exemples : “Cite tous les verbatims sur la livraison” · “Fais une synthèse du SAV”
               </p>
             </div>
           </div>
@@ -68,7 +68,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <script>
-    // --- Config Firebase ---
+    // --- Firebase ---
     const firebaseConfig = {
       apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
       authDomain: "smartverbatims.firebaseapp.com",
@@ -79,10 +79,7 @@
       measurementId: "G-R64GD8CJLS"
     };
 
-    // Init Firebase (évite double init si déjà fait ailleurs)
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
     // Garde d'accès : si pas connecté -> retour login
@@ -106,8 +103,118 @@
     });
   </script>
 
-  <!-- Ton script de chat -->
-  <script src="script/script.js"></script>
+  <!-- === CHAT DIFY (INLINE, MODE BLOCKING) === -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("[chat] DOM prêt (inline)");
+
+      // ====== CONFIG DIFY ======
+      const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";
+      const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";
+
+      // ====== HOOK UI ======
+      const $        = (id) => document.getElementById(id);
+      const messages = $("messages");
+      const empty    = $("empty");
+      const input    = $("q");
+      const btn      = $("send");
+      const errLine  = document.getElementById("chat-error");
+
+      if (!messages || !input || !btn) {
+        console.error("[chat] IDs manquants", { messages: !!messages, input: !!input, btn: !!btn });
+        if (errLine) errLine.textContent = "Erreur d’initialisation du chat (éléments introuvables).";
+        return;
+      }
+
+      const refreshBtn = () => btn.disabled = !input.value.trim();
+      input.addEventListener("input", refreshBtn);
+      refreshBtn();
+
+      function bubble(text, role) {
+        if (empty) empty.remove();
+        const line = document.createElement("div");
+        line.className = "flex " + (role === "user" ? "justify-end" : "justify-start");
+        const b = document.createElement("div");
+        b.className = (role === "user"
+          ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
+          : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800");
+        b.textContent = text;
+        line.appendChild(b);
+        messages.appendChild(line);
+        messages.scrollTop = messages.scrollHeight;
+        return b;
+      }
+
+      let sending = false;
+
+      async function send() {
+        if (sending) return;
+        const text = input.value.trim();
+        if (!text) return;
+
+        sending = true;
+        btn.disabled = true;
+        if (errLine) errLine.textContent = "";
+
+        bubble(text, "user");
+        input.value = "";
+        input.focus();
+        refreshBtn();
+
+        const bot = bubble("…", "bot");
+
+        // Appel Dify en mode "blocking" (réponse JSON unique)
+        const payload = {
+          inputs: {},
+          response_mode: "blocking",
+          auto_generate_name: true,
+          query: text,
+          user: "web-1"
+        };
+
+        try {
+          console.log("[chat] POST →", ENDPOINT);
+          const res = await fetch(ENDPOINT, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              Authorization: "Bearer " + TOKEN,
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            bot.textContent = `Erreur ${res.status}: ${res.statusText}`;
+            console.error("[chat] HTTP Error", res.status, res.statusText);
+            return;
+          }
+
+          const data = await res.json();
+          const answer = data?.answer || JSON.stringify(data);
+          bot.textContent = answer;
+          messages.scrollTop = messages.scrollHeight;
+        } catch (e) {
+          console.error("[chat] Network/JS error:", e);
+          bot.textContent = "Erreur : " + (e?.message || "réseau.");
+          if (errLine) errLine.textContent = "Impossible d’envoyer le message (réseau/CORS ?).";
+        } finally {
+          sending = false;
+          refreshBtn();
+        }
+      }
+
+      btn.addEventListener("click", send);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+      });
+
+      console.log("[chat] Listeners OK (inline)");
+    });
+  </script>
+
+  <!-- Si tu veux repasser au fichier externe, dé-commente la ligne suivante et supprime le script inline ci-dessus -->
+  <!-- <script src="script/script.js"></script> -->
 </body>
 </html>
-
