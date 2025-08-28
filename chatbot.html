@@ -29,16 +29,10 @@
     <main class="flex-1 flex flex-col">
       <header class="h-16 flex items-center justify-between px-4 md:px-8 bg-white border-b">
         <h1 class="text-lg font-semibold text-gray-800">Explorez la voix de vos clients</h1>
-        <div class="flex items-center gap-2">
-          <button id="open-settings" type="button"
-                  class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm border">
-            ⚙️ Paramètres
-          </button>
-          <button id="logout" type="button"
-                  class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
-            Déconnexion
-          </button>
-        </div>
+        <button id="logout" type="button"
+                class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
+          Déconnexion
+        </button>
       </header>
 
       <section class="flex-1 flex flex-col">
@@ -47,9 +41,7 @@
           <div id="empty" class="h-full w-full grid place-items-center text-center text-gray-500">
             <div>
               <p class="font-medium text-gray-600">Laissez moi vous aider à explorer les verbatims de vos clients !</p>
-              <p class="text-sm mt-1">
-                Exemples : “Cite tous les verbatims sur la livraison” · “Fais une synthèse du SAV”
-              </p>
+              <p class="text-sm mt-1">Exemples : “Cite tous les verbatims sur la livraison” · “Fais une synthèse du SAV”</p>
             </div>
           </div>
         </div>
@@ -70,83 +62,17 @@
     </main>
   </div>
 
-  <!-- Modal Paramètres -->
-  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/40 hidden items-center justify-center p-4">
-    <div class="w-full max-w-xl bg-white rounded-2xl shadow-lg border">
-      <div class="flex items-center justify-between px-6 py-4 border-b">
-        <h2 class="text-lg font-semibold text-gray-800">Paramètres Dify / Étude & Utilisateur</h2>
-        <button id="close-settings" class="text-gray-500 hover:text-gray-800">✕</button>
-      </div>
-
-      <div class="p-6 space-y-4">
-        <p class="text-sm text-gray-600">
-          Renseignez les champs ci-dessous si demandés par l’app Dify. Ils seront envoyés avec chaque requête.
-        </p>
-
-        <!-- Étude -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-sm text-gray-700">ID de l’étude</label>
-            <input id="etude-id" type="text" placeholder="ex: 42"
-                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"/>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700">Nom de l’étude</label>
-            <input id="etude-nom" type="text" placeholder="ex: APEC_Baromètre"
-                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"/>
-          </div>
-        </div>
-
-        <!-- Utilisateur -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-sm text-gray-700">Nom utilisateur (override)</label>
-            <input id="user-nom" type="text" placeholder="(par défaut: displayName/email)"
-                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"/>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700">Rôle</label>
-            <input id="user-role" type="text" placeholder="ex: admin / user"
-                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"/>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700">User ID (override)</label>
-            <input id="user-id" type="text" placeholder="(par défaut: Firebase UID)"
-                   class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"/>
-          </div>
-        </div>
-
-        <div class="pt-2 text-xs text-gray-500">
-          Astuce : ces paramètres sont stockés dans votre navigateur (localStorage). Vous pouvez les laisser vides si non requis.
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-2 px-6 py-4 border-t">
-        <button id="reset-kv" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm border">
-          Réinitialiser
-        </button>
-        <button id="save-kv" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm">
-          Enregistrer
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
-  <!-- JS inline : modal + chat + Dify + logout -->
+  <!-- JS inline : chat Dify + logout -->
   <script>
   (function () {
-    // ========= Helpers =========
     const $ = (id) => document.getElementById(id);
 
-    // ========= Démarrage après DOM prêt =========
     document.addEventListener("DOMContentLoaded", () => {
-      console.log("[init] DOMContentLoaded");
-
-      // ---------- Firebase (tolérant) ----------
+      // ---------- Firebase (garde d'accès + logout) ----------
       const firebaseConfig = {
         apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
         authDomain: "smartverbatims.firebaseapp.com",
@@ -160,125 +86,44 @@
         if (window.firebase && !firebase.apps.length) {
           firebase.initializeApp(firebaseConfig);
           const auth = firebase.auth();
-          auth.onAuthStateChanged((user) => {
-            if (!user) window.location.href = "index.html";
-          });
+          auth.onAuthStateChanged((user) => { if (!user) window.location.href = "index.html"; });
           const logoutBtn = $("logout");
-          if (logoutBtn) {
-            logoutBtn.addEventListener("click", async () => {
-              try { await auth.signOut(); window.location.href = "index.html"; }
-              catch (err) { console.error("Déconnexion Firebase:", err); }
-            });
-          }
+          if (logoutBtn) logoutBtn.addEventListener("click", async () => {
+            try { await auth.signOut(); window.location.href = "index.html"; }
+            catch (err) { console.error("Déconnexion Firebase:", err); }
+          });
         }
-      } catch (e) {
-        console.warn("[firebase] init warn:", e);
-      }
+      } catch (e) { console.warn("[firebase] init warn:", e); }
 
-      // ---------- Sélecteurs UI ----------
-      const messages = $("messages");
-      const empty    = $("empty");
-      const input    = $("q");
-      const btn      = $("send");
-      const errLine  = $("chat-error");
-
-      const openBtn   = $("open-settings");
-      const modal     = $("settings-modal");
-      const closeBtn  = $("close-settings");
-
-      const etudeIdEl = $("etude-id");
-      const etudeNomEl= $("etude-nom");
-      const userNomEl = $("user-nom");
-      const userRoleEl= $("user-role");
-      const userIdEl  = $("user-id");
-      const saveBtn   = $("save-kv");
-      const resetBtn  = $("reset-kv");
-
-      // ---------- Garde-fous ----------
+      // ---------- UI ----------
+      const messages = $("messages"), empty = $("empty"), input = $("q"),
+            btn = $("send"), errLine = $("chat-error");
       if (!messages || !input || !btn) {
-        console.error("[init] elements missing", { messages: !!messages, input: !!input, btn: !!btn });
         if (errLine) errLine.textContent = "Erreur d’initialisation du chat (éléments introuvables).";
         return;
       }
-
-      // ---------- Modal (z-index + fallback display) ----------
-      const LS_KEY = "dify_inputs_v2";
-      const loadKV = () => {
-        try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch { return {}; }
-      };
-      const saveKV = (obj) => localStorage.setItem(LS_KEY, JSON.stringify(obj || {}));
-
-      const fillEditorFromKV = () => {
-        const kv = loadKV();
-        etudeIdEl.value  = kv.etude_id  || "";
-        etudeNomEl.value = kv.etude_nom || "";
-        userNomEl.value  = kv.user_nom  || "";
-        userRoleEl.value = kv.user_role || "";
-        userIdEl.value   = kv.user_id   || "";
-      };
-      const collectKVFromEditor = () => ({
-        etude_id: etudeIdEl.value.trim(),
-        etude_nom: etudeNomEl.value.trim(),
-        user_nom: userNomEl.value.trim(),
-        user_role: userRoleEl.value.trim(),
-        user_id: userIdEl.value.trim(),
-      });
-
-      if (openBtn && modal && closeBtn) {
-        const showModal = () => {
-          fillEditorFromKV();
-          modal.classList.remove("hidden");
-          modal.classList.add("flex");
-          modal.style.display = "flex";
-          console.log("[settings] open");
-        };
-        const hideModal = () => {
-          modal.classList.add("hidden");
-          modal.classList.remove("flex");
-          modal.style.display = "none";
-          console.log("[settings] close");
-        };
-        openBtn.addEventListener("click", showModal);
-        closeBtn.addEventListener("click", hideModal);
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) hideModal();
-        });
-        if (saveBtn) saveBtn.addEventListener("click", () => {
-          saveKV(collectKVFromEditor());
-          modal.classList.add("hidden");
-          modal.classList.remove("flex");
-          modal.style.display = "none";
-        });
-        if (resetBtn) resetBtn.addEventListener("click", () => {
-          localStorage.removeItem(LS_KEY);
-          fillEditorFromKV();
-        });
-      } else {
-        console.warn("[settings] elements not found", { openBtn: !!openBtn, modal: !!modal, closeBtn: !!closeBtn });
-      }
-
-      // ---------- Chat ----------
-      const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";
-      const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";
-
       const refreshBtn = () => btn.disabled = !input.value.trim();
-      input.addEventListener("input", refreshBtn);
-      refreshBtn();
+      input.addEventListener("input", refreshBtn); refreshBtn();
 
       function bubble(text, role) {
         if (empty) empty.remove();
         const line = document.createElement("div");
         line.className = "flex " + (role === "user" ? "justify-end" : "justify-start");
         const b = document.createElement("div");
-        b.className = (role === "user"
+        b.className = (role === "user")
           ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
-          : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800");
+          : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800";
         b.textContent = text;
         line.appendChild(b);
         messages.appendChild(line);
         messages.scrollTop = messages.scrollHeight;
         return b;
       }
+
+      // ---------- Dify ----------
+      const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";
+      const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";
+      const DEFAULT_ETUDE = "DSE0045"; // <- valeur *exacte* exigée par Dify (select)
 
       let sending = false;
       let conversationId = null;
@@ -288,49 +133,32 @@
         const text = input.value.trim();
         if (!text) return;
 
-        sending = true;
-        btn.disabled = true;
-        if (errLine) errLine.textContent = "";
-
-        bubble(text, "user");
-        input.value = "";
-        input.focus();
-        refreshBtn();
-
+        sending = true; btn.disabled = true; if (errLine) errLine.textContent = "";
+        bubble(text, "user"); input.value = ""; input.focus(); refreshBtn();
         const bot = bubble("…", "bot");
 
-        // Firebase user (optionnel)
+        // Infos Firebase (optionnelles)
         let fbUser = null;
         try { fbUser = (window.firebase && firebase.auth().currentUser) || null; } catch {}
-
-        const kv = loadKV();
-        const user_id    = (kv.user_id || (fbUser && fbUser.uid) || "");
+        const user_id    = (fbUser && fbUser.uid) || "web-1";
         const user_email = (fbUser && fbUser.email) || "";
-        const user_nom   = (kv.user_nom || (fbUser && (fbUser.displayName || fbUser.email)) || "");
-        const user_role  = (kv.user_role || "user");
-        const etude_id   = (kv.etude_id || "");
-        const etude_nom  = (kv.etude_nom || "");
+        const user_nom   = (fbUser && (fbUser.displayName || fbUser.email)) || "";
 
-        const inputs = {
-          // PLATS
-          user_id, user_nom, user_email, user_role,
-          etude_id, etude_nom,
-          // IMBRIQUÉS
-          user:  { id: user_id || null, nom: user_nom || null, email: user_email || null, role: user_role || null },
-          etude: { id: etude_id || null, nom: etude_nom || null, id_user: user_id || null }
-        };
-
+        // Payload: *uniquement* etude en chaîne, comme demandé
         const payload = {
-          inputs,
+          inputs: {
+            etude: DEFAULT_ETUDE,
+            // (optionnel) on peut aussi passer quelques métadonnées simples :
+            user_id, user_email, user_nom
+          },
           response_mode: "blocking",
           auto_generate_name: true,
           query: text,
-          user: user_id || "web-1",
+          user: user_id,
           ...(conversationId ? { conversation_id: conversationId } : {})
         };
 
         try {
-          console.log("[chat] POST →", ENDPOINT, payload);
           const res = await fetch(ENDPOINT, {
             method: "POST",
             mode: "cors",
@@ -342,17 +170,12 @@
             body: JSON.stringify(payload)
           });
 
-          const raw = await res.text();
-          let data = null;
+          const raw = await res.text(); let data = null;
           try { data = JSON.parse(raw); } catch {}
 
           if (!res.ok) {
             const detail = (data && (data.message || data.error)) || raw || (res.status + " " + res.statusText);
             bot.textContent = `Erreur ${res.status} : ${detail}`;
-            console.error("[chat] HTTP Error", res.status, res.statusText, data || raw);
-            if (String(detail).toLowerCase().includes("input") && errLine) {
-              errLine.innerHTML = 'Des <strong>inputs</strong> semblent manquants. Cliquez sur <em>⚙️ Paramètres</em>, renseignez <code>etude_id</code>, <code>etude_nom</code>, etc.';
-            }
             return;
           }
 
@@ -361,23 +184,18 @@
           bot.textContent = answer;
           messages.scrollTop = messages.scrollHeight;
         } catch (e) {
-          console.error("[chat] Network/JS error:", e);
           bot.textContent = "Erreur : " + (e?.message || "réseau.");
           if (errLine) errLine.textContent = "Impossible d’envoyer le message (réseau/CORS ?).";
         } finally {
-          sending = false;
-          refreshBtn();
+          sending = false; refreshBtn();
         }
       }
 
       btn.addEventListener("click", send);
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-      });
-
-      console.log("[init] Listeners OK");
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
     });
   })();
   </script>
 </body>
 </html>
+
