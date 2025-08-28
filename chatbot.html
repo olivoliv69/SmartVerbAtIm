@@ -222,7 +222,20 @@ function bubble(text, role) {
 
           conversationId = data?.conversation_id || conversationId;
           const answer = data?.answer || (data ? JSON.stringify(data) : "(réponse vide)");
-bot.innerHTML = DOMPurify.sanitize(marked.parse(answer || ""));
+let html = "";
+try {
+  html = marked.parse(answer || "");
+} catch {
+  html = answer || "";
+}
+// si marked n'a rien converti (pas de markdown), on force les <br>
+if (!html.includes("<p") && (answer || "").includes("\n")) {
+  html = DOMPurify.sanitize((answer || "").replace(/\n/g, "<br/>"));
+} else {
+  html = DOMPurify.sanitize(html);
+}
+bot.innerHTML = html;
+
           messages.scrollTop = messages.scrollHeight;
         } catch (e) {
           bot.textContent = "Erreur : " + (e?.message || "réseau.");
