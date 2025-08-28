@@ -217,7 +217,7 @@ function bubble(text, role) {
 
           conversationId = data?.conversation_id || conversationId;
           const answer = data?.answer || (data ? JSON.stringify(data) : "(réponse vide)");
-          bot.textContent = answer;
+          bot.innerHTML = DOMPurify.sanitize(marked.parse(answer || ""));
           messages.scrollTop = messages.scrollHeight;
         } catch (e) {
           bot.textContent = "Erreur : " + (e?.message || "réseau.");
