@@ -8,10 +8,10 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
   <div class="flex h-screen">
-    <!-- Sidebar simple -->
+    <!-- Sidebar -->
     <aside class="w-72 bg-white border-r p-6">
       <div class="p-6 flex flex-col items-center gap-4 border-b">
-          <img src="Ressources/logo-enov.svg" alt="Logo Enov" width="120" height="auto">
+        <img src="Ressources/logo-enov.svg" alt="Logo Enov" width="120" height="auto">
       </div>
       <div class="mt-6 text-xs text-gray-500">Études</div>
       <div class="mt-2 p-4 rounded-xl bg-blue-600 text-white text-sm">
@@ -21,8 +21,11 @@
 
     <!-- Zone principale -->
     <main class="flex-1 flex flex-col">
-      <header class="h-16 flex items-center px-8 bg-white border-b">
+      <header class="h-16 flex items-center justify-between px-8 bg-white border-b">
         <h1 class="text-lg font-semibold text-gray-800">Explorez la voix de vos clients</h1>
+        <button id="logout" class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm">
+          Déconnexion
+        </button>
       </header>
 
       <section class="flex-1 flex flex-col">
@@ -33,8 +36,8 @@
               <p class="font-medium text-gray-600">Laissez moi vous aider à explorez les verbatims de vos clients!</p>
               <p class="text-sm">
                 Quelques exemples de ce que vous pouvez me demander :<br>
-                « Cite moi tous les verbatims qui traitent de telle problématique »<br>
-                « Fais moi une synthèse de tout ce qui se dit à propos de la satisfaction à propos du service après-vente ». 
+                « Cite moi tous les verbatims qui traitent de telle problématique »<br>
+                « Fais moi une synthèse de tout ce qui se dit à propos de la satisfaction à propos du service après-vente ». 
               </p>
             </div>
           </div>
@@ -53,6 +56,45 @@
       </section>
     </main>
   </div>
+
+  <!-- Firebase SDK COMPAT -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // --- Config Firebase ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDP6Wix-qehAnUq9FYmMAYdbEiqKYQnXWs",
+      authDomain: "smartverbatims.firebaseapp.com",
+      projectId: "smartverbatims",
+      storageBucket: "smartverbatims.appspot.com",
+      messagingSenderId: "1043743921058",
+      appId: "1:1043743921058:web:637f9bc10cc3859e86d8fb",
+      measurementId: "G-R64GD8CJLS"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Vérifie si l'utilisateur est connecté, sinon retour login
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        window.location.href = "index.html";
+      }
+    });
+
+    // Déconnexion
+    const logoutBtn = document.getElementById("logout");
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await auth.signOut();
+        window.location.href = "index.html";
+      } catch (err) {
+        console.error("Erreur lors de la déconnexion :", err);
+      }
+    });
+  </script>
+
   <script src="script/script.js"></script>
 </body>
 </html>
