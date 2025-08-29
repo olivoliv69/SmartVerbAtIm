@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="color-scheme" content="light only" />
   <link rel="icon" type="image/png" href="https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
   <noscript>
@@ -115,10 +117,8 @@ function bubble(text, role) {
   if (empty) empty.remove();
 
   const line = document.createElement("div");
-  // même alignement qu’avant, + avatars (items-start + gap-2)
   line.className = "flex " + (role === "user" ? "justify-end" : "justify-start") + " items-start gap-2";
 
-  // avatar
   const avatar = document.createElement("img");
   avatar.src = (role === "user")
     ? "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/pers.png?raw=true"
@@ -126,18 +126,19 @@ function bubble(text, role) {
   avatar.alt = (role === "user") ? "Vous" : "Assistant";
   avatar.width = 32; avatar.height = 32;
   avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
-  avatar.referrerPolicy = "no-referrer";   // <-- pour éviter certains blocages GitHub
-  avatar.loading = "lazy";
-  avatar.onerror = () => { avatar.remove(); }; // fallback discret si l’image ne charge pas
 
-  // bulle
   const b = document.createElement("div");
   b.className = (role === "user")
     ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
-    : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800";
-  b.textContent = text;
+    : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800 prose prose-sm";
 
-  // ordre : user (bulle puis avatar à droite) / bot (avatar puis bulle à gauche)
+  // 🔑 ici la différence :
+  if (role === "user") {
+    b.textContent = text;
+  } else {
+    b.innerHTML = DOMPurify.sanitize(marked.parse(text || ""));
+  }
+
   if (role === "user") {
     line.appendChild(b);
     line.appendChild(avatar);
@@ -150,6 +151,7 @@ function bubble(text, role) {
   messages.scrollTop = messages.scrollHeight;
   return b;
 }
+
 
 
 
