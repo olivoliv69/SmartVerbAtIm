@@ -7,6 +7,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="color-scheme" content="light only" />
   <link rel="icon" type="image/png" href="https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true" />
+
+  <!-- 🔑 Ajout des librairies pour Markdown + sécurité -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js"></script>
+
+  <style>
+    /* Pour que les puces et paragraphes soient bien visibles */
+    .prose p { margin: .25rem 0; }
+    .prose ul { list-style: disc; margin: .25rem 0 .25rem 1.5rem; }
+    .prose ol { list-style: decimal; margin: .25rem 0 .25rem 1.5rem; }
+    .prose strong { font-weight: 600; }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
   <noscript>
@@ -111,51 +123,50 @@
       const refreshBtn = () => btn.disabled = !input.value.trim();
       input.addEventListener("input", refreshBtn); refreshBtn();
 
-function bubble(text, role) {
-  if (empty) empty.remove();
+      function bubble(text, role) {
+        if (empty) empty.remove();
 
-  const line = document.createElement("div");
-  // même alignement qu’avant, + avatars (items-start + gap-2)
-  line.className = "flex " + (role === "user" ? "justify-end" : "justify-start") + " items-start gap-2";
+        const line = document.createElement("div");
+        line.className = "flex " + (role === "user" ? "justify-end" : "justify-start") + " items-start gap-2";
 
-  // avatar
-  const avatar = document.createElement("img");
-  avatar.src = (role === "user")
-    ? "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/pers.png?raw=true"
-    : "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true";
-  avatar.alt = (role === "user") ? "Vous" : "Assistant";
-  avatar.width = 32; avatar.height = 32;
-  avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
-  avatar.referrerPolicy = "no-referrer";   // <-- pour éviter certains blocages GitHub
-  avatar.loading = "lazy";
-  avatar.onerror = () => { avatar.remove(); }; // fallback discret si l’image ne charge pas
+        const avatar = document.createElement("img");
+        avatar.src = (role === "user")
+          ? "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/pers.png?raw=true"
+          : "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true";
+        avatar.alt = (role === "user") ? "Vous" : "Assistant";
+        avatar.width = 32; avatar.height = 32;
+        avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
 
-  // bulle
-  const b = document.createElement("div");
-  b.className = (role === "user")
-    ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
-    : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800";
+        const b = document.createElement("div");
+        b.className = (role === "user")
+          ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
+          : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800 prose prose-sm";
 
-  // ordre : user (bulle puis avatar à droite) / bot (avatar puis bulle à gauche)
-  if (role === "user") {
-    line.appendChild(b);
-    line.appendChild(avatar);
-  } else {
-    line.appendChild(avatar);
-    line.appendChild(b);
-  }
+        if (role === "user") {
+          b.textContent = text;
+        } else {
+          // 🔑 ici : on applique Markdown + nettoyage
+          const html = marked.parse(text || "").trim() || text.replace(/\n/g, "<br>");
+          b.innerHTML = DOMPurify.sanitize(html);
+        }
 
-  messages.appendChild(line);
-  messages.scrollTop = messages.scrollHeight;
-  return b;
-}
+        if (role === "user") {
+          line.appendChild(b);
+          line.appendChild(avatar);
+        } else {
+          line.appendChild(avatar);
+          line.appendChild(b);
+        }
 
-
+        messages.appendChild(line);
+        messages.scrollTop = messages.scrollHeight;
+        return b;
+      }
 
       // ---------- Dify ----------
       const TOKEN    = "app-TzgNBWukBZCRAi4wQc2OcS3I";
       const ENDPOINT = "https://dify.enov.fr/v1/chat-messages";
-      const FIXED_ETUDE = "DSE0045"; // <- valeur *exacte* exigée par Dify (select)
+      const FIXED_ETUDE = "DSE0045";
 
       let sending = false;
       let conversationId = null;
@@ -179,12 +190,10 @@ function bubble(text, role) {
         bubble(text, "user"); input.value = ""; input.focus(); refreshBtn();
         const bot = bubble("…", "bot");
 
-        // Infos Firebase (optionnelles)
         let fbUser = null;
         try { fbUser = (window.firebase && firebase.auth().currentUser) || null; } catch {}
         const user_id = (fbUser && fbUser.uid) || "web-1";
 
-        // ---- PAYLOAD : etude = "DSE0045" (STRING), rien d’autre d’obligatoire ----
         const payload = {
           inputs: { etude: FIXED_ETUDE },
           response_mode: "blocking",
@@ -193,8 +202,6 @@ function bubble(text, role) {
           user: user_id,
           ...(conversationId ? { conversation_id: conversationId } : {})
         };
-
-        console.log("[chat] typeof etude =", typeof payload.inputs.etude, payload);
 
         try {
           const res = await fetch(ENDPOINT, {
@@ -213,13 +220,13 @@ function bubble(text, role) {
 
           if (!res.ok) {
             const detail = (data && (data.message || data.error)) || raw || (res.status + " " + res.statusText);
-            bot.textContent = `Erreur ${res.status} : ${detail}`;
+            bot.innerHTML = `Erreur ${res.status} : ${detail}`;
             return;
           }
 
           conversationId = data?.conversation_id || conversationId;
           const answer = data?.answer || (data ? JSON.stringify(data) : "(réponse vide)");
-          bot.textContent = answer;
+          bot.innerHTML = DOMPurify.sanitize(marked.parse(answer || "").trim() || answer.replace(/\n/g,"<br>"));
           messages.scrollTop = messages.scrollHeight;
         } catch (e) {
           bot.textContent = "Erreur : " + (e?.message || "réseau.");
@@ -236,4 +243,3 @@ function bubble(text, role) {
   </script>
 </body>
 </html>
-
