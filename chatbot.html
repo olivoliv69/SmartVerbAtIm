@@ -54,14 +54,14 @@
       </header>
 
       <section class="flex-1 flex flex-col">
-        <!-- Messages -->
-        <div id="messages" class="flex-1 overflow-y-auto px-4 md:px-10 py-6 space-y-3">
-          <div id="empty" class="h-full w-full grid place-items-center text-center text-gray-500">
-            <div>
-              <p class="font-medium text-gray-600">Laissez-moi vous aider à explorer les verbatims de vos clients !</p>
-              <p class="text-sm mt-1">Exemples : “Cite tous les verbatims sur la livraison” · “Fais une synthèse du SAV”</p>
-            </div>
-          </div>
+        <!-- Intégration du chatbot Dify -->
+        <div class="flex-1 overflow-y-auto px-4 md:px-10 py-6 space-y-3">
+          <iframe
+            src="http://dify.enov.fr/chatbot/jcNt3u27Jdl8pLW7"
+            style="width: 100%; height: 100%; min-height: 700px"
+            frameborder="0"
+            allow="microphone">
+          </iframe>
         </div>
 
         <!-- Input -->
@@ -113,66 +113,9 @@
         }
       } catch (e) { console.warn("[firebase] init warn:", e); }
 
-      // ---------- UI ----------
-      const messages = $("messages"), empty = $("empty"), input = $("q"),
-            btn = $("send"), errLine = $("chat-error"), resetBtn = $("reset");
-      if (!messages || !input || !btn) {
-        if (errLine) errLine.textContent = "Erreur d’init du chat (éléments introuvables).";
-        return;
-      }
-      const refreshBtn = () => btn.disabled = !input.value.trim();
-      input.addEventListener("input", refreshBtn); refreshBtn();
-
-      function bubble(text, role) {
-        if (empty) empty.remove();
-
-        const line = document.createElement("div");
-        line.className = "flex " + (role === "user" ? "justify-end" : "justify-start") + " items-start gap-2";
-
-        const avatar = document.createElement("img");
-        avatar.src = (role === "user")
-          ? "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/pers.png?raw=true"
-          : "https://github.com/olivoliv69/SmartVerbAtIm/blob/main/ia2.png?raw=true";
-        avatar.alt = (role === "user") ? "Vous" : "Assistant";
-        avatar.width = 32; avatar.height = 32;
-        avatar.className = "w-8 h-8 rounded-full border bg-white flex-shrink-0";
-
-        const b = document.createElement("div");
-        b.className = (role === "user")
-          ? "max-w-[70%] rounded-xl px-4 py-3 bg-blue-600 text-white"
-          : "max-w-[70%] rounded-xl px-4 py-3 bg-white border shadow-sm text-gray-800 prose prose-sm";
-
-        if (role === "user") {
-          b.textContent = text;
-        } else {
-          // 🔑 ici : on applique Markdown + nettoyage
-          const html = marked.parse(text || "").trim() || text.replace(/\n/g, "<br>");
-          b.innerHTML = DOMPurify.sanitize(html);
-        }
-
-        if (role === "user") {
-          line.appendChild(b);
-          line.appendChild(avatar);
-        } else {
-          line.appendChild(avatar);
-          line.appendChild(b);
-        }
-
-        messages.appendChild(line);
-        messages.scrollTop = messages.scrollHeight;
-        return b;
-      }
-
-      // ---------- Dify ----------
-      const TOKEN    = "app-oBRdNVuub484gvNuDl93Z0CE";
-      const ENDPOINT = "http://dify.enov.fr/v1";
-      const FIXED_ETUDE = "DSE0045";
-
-      let sending = false;
-      let conversationId = null;
-
+      // ---------- UI ----------      
+      const resetBtn = $("reset");
       if (resetBtn) resetBtn.addEventListener("click", () => {
-        conversationId = null;
         messages.innerHTML = "";
         const placeholder = document.createElement("div");
         placeholder.id = "empty";
@@ -180,73 +123,8 @@
         placeholder.innerHTML = '<div><p class="font-medium text-gray-600">Nouvelle conversation démarrée.</p></div>';
         messages.appendChild(placeholder);
       });
-
-      async function send() {
-        if (sending) return;
-        const text = input.value.trim();
-        if (!text) return;
-
-        sending = true; btn.disabled = true; if (errLine) errLine.textContent = "";
-        bubble(text, "user"); input.value = ""; input.focus(); refreshBtn();
-        const bot = bubble("…", "bot");
-
-        let fbUser = null;
-        try { fbUser = (window.firebase && firebase.auth().currentUser) || null; } catch {}
-        const user_id = (fbUser && fbUser.uid) || "web-1";
-
-        const payload = {
-          inputs: { etude: FIXED_ETUDE },
-          response_mode: "blocking",
-          auto_generate_name: true,
-          query: text,
-          user: user_id,
-          ...(conversationId ? { conversation_id: conversationId } : {})
-        };
-
-        try {
-          const res = await fetch(ENDPOINT, {
-            method: "POST",
-            mode: "cors",
-            headers: {
-              Authorization: "Bearer " + TOKEN,
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            body: JSON.stringify(payload)
-          });
-
-          const raw = await res.text(); let data = null;
-          try { data = JSON.parse(raw); } catch {}
-
-          if (!res.ok) {
-            const detail = (data && (data.message || data.error)) || raw || (res.status + " " + res.statusText);
-            bot.innerHTML = `Erreur ${res.status} : ${detail}`;
-            return;
-          }
-
-          conversationId = data?.conversation_id || conversationId;
-          const answer = data?.answer || (data ? JSON.stringify(data) : "(réponse vide)");
-          bot.innerHTML = DOMPurify.sanitize(marked.parse(answer || "").trim() || answer.replace(/\n/g,"<br>"));
-          messages.scrollTop = messages.scrollHeight;
-        } catch (e) {
-          bot.textContent = "Erreur : " + (e?.message || "réseau.");
-          if (errLine) errLine.textContent = "Impossible d’envoyer le message (réseau/CORS ?).";
-        } finally {
-          sending = false; refreshBtn();
-        }
-      }
-
-      btn.addEventListener("click", send);
-      input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
     });
   })();
   </script>
 </body>
-<iframe
- src="http://dify.enov.fr/chatbot/jcNt3u27Jdl8pLW7"
- style="width: 100%; height: 100%; min-height: 700px"
- frameborder="0"
- allow="microphone">
-</iframe>
-  
 </html>
